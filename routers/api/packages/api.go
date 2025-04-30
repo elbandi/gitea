@@ -520,18 +520,17 @@ func CommonRoutes() *web.Router {
 		})
 		// See https://docs.gitlab.com/ci/jobs/fine_grained_permissions/#terraform-state-endpoints
 		// For endpoint and permission reference
-		r.Group("/terraform/state/{name}", func() {
-			r.Get("", terraform.GetTerraformState)
-			r.Get("/versions/{serial}", terraform.GetTerraformStateBySerial)
-			r.Group("", func() {
-				r.Post("", terraform.UploadState)
-				r.Delete("", terraform.DeleteState)
-				r.Delete("/versions/{serial}", terraform.DeleteStateBySerial)
-			}, reqPackageAccess(perm.AccessModeWrite))
-			r.Group("/lock", func() {
-				r.Post("", terraform.LockState)
-				r.Delete("", terraform.UnlockState)
-			}, reqPackageAccess(perm.AccessModeWrite))
+		r.Group("/terraform", func() {
+			r.Group("/{packagename}", func() {
+				r.Delete("", reqPackageAccess(perm.AccessModeWrite), terraform.DeleteState)
+				r.Group("/state/{filename}", func() {
+					r.Get("", terraform.DownloadStateFile)
+					r.Group("", func() {
+						r.Put("", terraform.UploadState)
+						r.Delete("", terraform.DeleteStateFile)
+					}, reqPackageAccess(perm.AccessModeWrite))
+				})
+			})
 		}, reqPackageAccess(perm.AccessModeRead))
 		r.Group("/vagrant", func() {
 			r.Group("/authenticate", func() {

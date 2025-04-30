@@ -51,7 +51,7 @@ const (
 	TypeRpm            Type = "rpm"
 	TypeRubyGems       Type = "rubygems"
 	TypeSwift          Type = "swift"
-	TypeTerraformState Type = "terraform"
+	TypeTerraformState Type = "tf-state"
 	TypeVagrant        Type = "vagrant"
 )
 
@@ -180,7 +180,7 @@ func (pt Type) SVGName() string {
 	case TypeSwift:
 		return "gitea-swift"
 	case TypeTerraformState:
-		return "gitea-terraform"
+		return "gitea-tf-state"
 	case TypeVagrant:
 		return "gitea-vagrant"
 	}
