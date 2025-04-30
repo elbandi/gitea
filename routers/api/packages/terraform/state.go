@@ -5,6 +5,7 @@ package terraform
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
@@ -20,9 +21,8 @@ import (
 )
 
 var (
-	packageNameRegex                        = regexp.MustCompile(`\A[-_+.\w]+\z`)
-	filenameRegex                           = regexp.MustCompile(`\A[-_+=:;.()\[\]{}~!@#$%^& \w]+\z`)
-	lockRelease      globallock.ReleaseFunc = nil
+	packageNameRegex = regexp.MustCompile(`\A[-_+.\w]+\z`)
+	filenameRegex    = regexp.MustCompile(`\A[-_+=:;.()\[\]{}~!@#$%^& \w]+\z`)
 )
 
 func apiError(ctx *context.Context, status int, obj any) {
@@ -206,4 +206,48 @@ func DeleteStateFile(ctx *context.Context) {
 	}
 
 	ctx.Status(http.StatusNoContent)
+}
+
+// LockState locks the specific terraform state.
+func LockState(ctx *context.Context) {
+	packageName := ctx.PathParam("packagename")
+	pv, err := packages_model.GetVersionByNameAndVersion(ctx, ctx.Package.Owner.ID, packages_model.TypeTfState, packageName, ctx.PathParam("filename"))
+	if err != nil {
+		if errors.Is(err, packages_model.ErrPackageNotExist) || errors.Is(err, packages_model.ErrPackageFileNotExist) {
+			apiError(ctx, http.StatusNotFound, err)
+			return
+		}
+		apiError(ctx, http.StatusInternalServerError, err)
+		return
+	}
+
+	ok, _, err := globallock.TryLock(ctx, fmt.Sprintf("%s/%s", packageName, pv.LowerVersion))
+	if err != nil {
+		apiError(ctx, http.StatusInternalServerError, err)
+		return
+	}
+	if !ok {
+		apiError(ctx, http.StatusLocked, err)
+		return
+	}
+
+	ctx.Status(http.StatusOK)
+}
+
+// UnlockState unlock the specific terraform state.
+func UnlockState(ctx *context.Context) {
+	packageName := ctx.PathParam("packagename")
+	pv, err := packages_model.GetVersionByNameAndVersion(ctx, ctx.Package.Owner.ID, packages_model.TypeTfState, packageName, ctx.PathParam("filename"))
+	if err != nil {
+		if errors.Is(err, packages_model.ErrPackageNotExist) || errors.Is(err, packages_model.ErrPackageFileNotExist) {
+			apiError(ctx, http.StatusNotFound, err)
+			return
+		}
+		apiError(ctx, http.StatusInternalServerError, err)
+		return
+	}
+
+	_ = globallock.Unlock(ctx, fmt.Sprintf("%s/%s", packageName, pv.LowerVersion))
+
+	ctx.Status(http.StatusOK)
 }
