@@ -3630,7 +3630,7 @@
   "packages.swift.registry": "Set up this registry from the command line:",
   "packages.swift.install": "Add the package in your <code>Package.swift</code> file:",
   "packages.swift.install2": "and run the following command:",
-  "packages.terraform.install": "Set your state to use the HTTP backend",
+  "packages.terraform.install": "Setup this registry to your backend config",
   "packages.terraform.install2": "and run the following command:",
   "packages.terraform.lock_status": "Lock Status",
   "packages.terraform.locked_by": "Locked by %s",
