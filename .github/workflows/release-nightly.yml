@@ -72,7 +72,7 @@ jobs:
         id: meta
         with:
           images: |-
-            ghcr.io/go-gitea/gitea
+            ghcr.io/${{ github.repository_owner }}/gitea
           tags: |
             type=raw,value=${{ steps.clean_name.outputs.branch }}
           annotations: |
@@ -81,7 +81,7 @@ jobs:
         id: meta_rootless
         with:
           images: |-
-            ghcr.io/go-gitea/gitea
+            ghcr.io/${{ github.repository_owner }}/gitea
           # each tag below will have the suffix of -rootless
           flavor: |
             suffix=-rootless
@@ -103,8 +103,8 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           annotations: ${{ steps.meta.outputs.annotations }}
-          cache-from: type=registry,ref=ghcr.io/go-gitea/gitea:buildcache-rootful
-          cache-to: type=registry,ref=ghcr.io/go-gitea/gitea:buildcache-rootful,mode=max
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/gitea:buildcache-rootful
+          cache-to: type=registry,ref=ghcr.io/${{ github.repository_owner }}/gitea:buildcache-rootful,mode=max
       - name: build rootless docker image
         uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
         with:
@@ -114,5 +114,5 @@ jobs:
           file: Dockerfile.rootless
           tags: ${{ steps.meta_rootless.outputs.tags }}
           annotations: ${{ steps.meta_rootless.outputs.annotations }}
-          cache-from: type=registry,ref=ghcr.io/go-gitea/gitea:buildcache-rootless
-          cache-to: type=registry,ref=ghcr.io/go-gitea/gitea:buildcache-rootless,mode=max
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/gitea:buildcache-rootless
+          cache-to: type=registry,ref=ghcr.io/${{ github.repository_owner }}/gitea:buildcache-rootless,mode=max
