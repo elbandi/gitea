@@ -72,7 +72,6 @@ jobs:
         id: meta
         with:
           images: |-
-            gitea/gitea
             ghcr.io/go-gitea/gitea
           tags: |
             type=raw,value=${{ steps.clean_name.outputs.branch }}
@@ -82,7 +81,6 @@ jobs:
         id: meta_rootless
         with:
           images: |-
-            gitea/gitea
             ghcr.io/go-gitea/gitea
           # each tag below will have the suffix of -rootless
           flavor: |
@@ -91,11 +89,6 @@ jobs:
             type=raw,value=${{ steps.clean_name.outputs.branch }}
           annotations: |
             org.opencontainers.image.authors="maintainers@gitea.io"
-      - name: Login to Docker Hub
-        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Login to GHCR using PAT
         uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
         with:
