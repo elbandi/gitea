@@ -10,7 +10,7 @@ concurrency:
 
 jobs:
   nightly-binary:
-    runs-on: namespace-profile-gitea-release-binary
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
@@ -50,7 +50,7 @@ jobs:
           path: dist/release/*
 
   nightly-container:
-    runs-on: namespace-profile-gitea-release-docker
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write # to publish to ghcr.io
