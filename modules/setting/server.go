@@ -101,6 +101,7 @@ var (
 	AcmeEmail                  string
 	AcmeURL                    string
 	AcmeCARoot                 string
+	AcmeDNSProvider            string
 	SSLMinimumVersion          string
 	SSLMaximumVersion          string
 	SSLCurvePreferences        []string
@@ -167,6 +168,7 @@ func loadServerFrom(rootCfg ConfigProvider) {
 				deprecatedSetting(rootCfg, "server", "LETSENCRYPT_EMAIL", "server", "ACME_EMAIL", "v1.19.0")
 				AcmeEmail = sec.Key("LETSENCRYPT_EMAIL").MustString("")
 			}
+			AcmeDNSProvider = sec.Key("ACME_DNS_PROVIDER").MustString("")
 		} else {
 			CertFile = sec.Key("CERT_FILE").String()
 			KeyFile = sec.Key("KEY_FILE").String()

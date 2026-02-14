@@ -15,12 +15,17 @@ import (
 	"strings"
 
 	"gitea.dev/modules/graceful"
+	"gitea.dev/modules/json"
 	"gitea.dev/modules/log"
 	"gitea.dev/modules/process"
 	"gitea.dev/modules/setting"
 	"gitea.dev/modules/util"
 
 	"github.com/caddyserver/certmagic"
+	"github.com/libdns/acmedns"
+	"github.com/libdns/cloudflare"
+	"github.com/libdns/rfc2136"
+	"github.com/libdns/route53"
 )
 
 func getCARoot(path string) (*x509.CertPool, error) {
@@ -41,10 +46,53 @@ func getCARoot(path string) (*x509.CertPool, error) {
 	return certPool, nil
 }
 
+func getDNSProvider(acmeDNSProvider string) (certmagic.DNSProvider, error) {
+	// TODO: betterway to parse the configuration, and support more providers in the future
+	acmeDNSProviderConfig := map[string]string{}
+	err := json.Unmarshal([]byte(acmeDNSProvider), acmeDNSProviderConfig)
+	if err != nil {
+		return nil, err
+	}
+	provider, ok := acmeDNSProviderConfig["provider"]
+	if !ok {
+		return nil, fmt.Errorf("missing 'provider' field in ACME DNS provider configuration")
+	}
+
+	switch provider {
+	case "acmedns":
+		return &acmedns.Provider{
+			ServerURL: acmeDNSProviderConfig["ACMEDNS_SERVER_URL"],
+			Username:  acmeDNSProviderConfig["ACMEDNS_USERNAME"],
+			Password:  acmeDNSProviderConfig["ACMEDNS_PASSWORD"],
+			Subdomain: acmeDNSProviderConfig["ACMEDNS_SUBDOMAIN"],
+		}, nil
+	case "cloudflare":
+		return &cloudflare.Provider{
+			APIToken: acmeDNSProviderConfig["CLOUDFLARE_API_TOKEN"],
+		}, nil
+	case "rfc2136":
+		return &rfc2136.Provider{
+			KeyName: acmeDNSProviderConfig["RFC2136_KEY_NAME"],
+			KeyAlg:  acmeDNSProviderConfig["RFC2136_KEY_ALG"],
+			Key:     acmeDNSProviderConfig["RFC2136_KEY"],
+			Server:  acmeDNSProviderConfig["RFC2136_SERVER"],
+		}, nil
+	case "route53":
+		return &route53.Provider{
+			AccessKeyId:     acmeDNSProviderConfig["ROUTE53_ACCESS_KEY"],
+			SecretAccessKey: acmeDNSProviderConfig["ROUTE53_SECRET_KEY"],
+			HostedZoneID:    acmeDNSProviderConfig["ROUTE53_ZONE_ID"],
+		}, nil
+	default:
+		return nil, fmt.Errorf("unsupported ACME DNS provider: %s", provider)
+	}
+}
+
 func runACME(listenAddr string, m http.Handler) error {
 	// If HTTP Challenge enabled, needs to be serving on port 80. For TLSALPN needs 443.
 	// Due to docker port mapping this can't be checked programmatically
 	// TODO: these are placeholders until we add options for each in settings with appropriate warning
+	enableDNSChallenge := false
 	enableHTTPChallenge := true
 	enableTLSALPNChallenge := true
 	altHTTPPort := 0
@@ -66,12 +114,30 @@ func runACME(listenAddr string, m http.Handler) error {
 			log.Warn("Failed to parse CA Root certificate, using default CA trust: %v", err)
 		}
 	}
+
 	// FIXME: this path is not right, it uses "AppWorkPath" incorrectly, and writes the data into "AppWorkPath/https"
 	// Ideally it should migrate to AppDataPath write to "AppDataPath/https"
 	// And one more thing, no idea why we should set the global default variables here
 	// But it seems that the current ACME code needs these global variables to make renew work.
 	// Otherwise, "renew" will use incorrect storage path
 	oldDefaultACME := certmagic.DefaultACME
+	var dns01Solver *certmagic.DNS01Solver
+	if setting.AcmeDNSProvider != "" {
+		dnsprovider, err := getDNSProvider(setting.AcmeDNSProvider)
+		if err != nil {
+			return err
+		}
+
+		dns01Solver = &certmagic.DNS01Solver{
+			DNSManager: certmagic.DNSManager{
+				DNSProvider: dnsprovider,
+				TTL:         60, // setting.AcmeDNS01TTL,
+				Logger:      oldDefaultACME.Logger,
+				Resolvers:   []string{oldDefaultACME.Resolver},
+			},
+		}
+		enableDNSChallenge = true
+	}
 	certmagic.Default.Storage = &certmagic.FileStorage{Path: setting.AcmeLiveDirectory}
 	certmagic.DefaultACME = certmagic.ACMEIssuer{
 		// try to use the default values provided by DefaultACME
@@ -88,6 +154,7 @@ func runACME(listenAddr string, m http.Handler) error {
 		ListenHost:              setting.HTTPAddr,
 		AltTLSALPNPort:          altTLSALPNPort,
 		AltHTTPPort:             altHTTPPort,
+		DNS01Solver:             dns01Solver,
 	}
 
 	magic := certmagic.NewDefault()
@@ -111,6 +178,9 @@ func runACME(listenAddr string, m http.Handler) error {
 		}
 	}
 
+	if enableDNSChallenge {
+		return nil
+	}
 	tlsConfig := magic.TLSConfig()
 	tlsConfig.NextProtos = append(tlsConfig.NextProtos, "h2")
 
