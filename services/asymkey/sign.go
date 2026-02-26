@@ -69,6 +69,20 @@ func signingModeFromStrings(modeStrings []string) []signingMode {
 	return returnable
 }
 
+func GetUserPubkeysGPG(ctx context.Context, userID int64) ([]*asymkey_model.GPGKey, error) {
+	gpgkeys, err := db.Find[asymkey_model.GPGKey](ctx, asymkey_model.FindGPGKeyOptions{
+		OwnerID:        userID,
+		IncludeSubKeys: false,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if err := asymkey_model.GPGKeyList(gpgkeys).LoadSubKeys(ctx); err != nil {
+		return nil, err
+	}
+	return gpgkeys, nil
+}
+
 func userHasPubkeysGPG(ctx context.Context, userID int64) (bool, error) {
 	return db.Exist[asymkey_model.GPGKey](ctx, asymkey_model.FindGPGKeyOptions{
 		OwnerID:        userID,

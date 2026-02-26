@@ -15,6 +15,7 @@ import (
 	"gitea.dev/modules/timeutil"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
+	"github.com/ProtonMail/go-crypto/openpgp/armor"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	"xorm.io/builder"
 )
@@ -57,6 +58,21 @@ func (key *GPGKey) LoadSubKeys(ctx context.Context) error {
 // PaddedKeyID show KeyID padded to 16 characters
 func (key *GPGKey) PaddedKeyID() string {
 	return PaddedKeyID(key.KeyID)
+}
+
+func (key *GPGKey) String() (string, error) {
+	var buf strings.Builder
+	w, err := armor.Encode(&buf, openpgp.PublicKeyType, nil)
+	if err != nil {
+		return "", err
+	}
+	if _, err := w.Write([]byte(key.Content)); err != nil {
+		return "", err
+	}
+	if err := w.Close(); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
 }
 
 // PaddedKeyID show KeyID padded to 16 characters

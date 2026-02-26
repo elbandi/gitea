@@ -535,6 +535,16 @@ func CommonRoutes() *web.Router {
 					}, reqPackageAccess(perm.AccessModeWrite))
 				})
 			})
+			r.Group("/provider/{packagename}/{packageversion}", func() {
+				r.Group("", func() {
+					r.Put("", terraform.UploadProvider)
+					r.Delete("", terraform.DeleteProvider)
+				}, reqPackageAccess(perm.AccessModeWrite))
+				r.Group("/{filename}", func() {
+					r.Methods("HEAD,GET", "", terraform.DownloadProviderFile)
+					//						r.Delete("", terraform.DeleteProviderFile)
+				})
+			})
 		}, reqPackageAccess(perm.AccessModeRead))
 		r.Group("/vagrant", func() {
 			r.Group("/authenticate", func() {
@@ -604,6 +614,31 @@ func ContainerRoutes() *web.Router {
 			g.MatchPath("DELETE", `/<image:*>/manifests/<reference>`, container.VerifyImageName, reqPackageAccess(perm.AccessModeWrite), container.DeleteManifest)
 		})
 	}, container.ReqContainerAccess, context.UserAssignmentWeb(), context.PackageAssignment(), reqPackageAccess(perm.AccessModeRead))
+
+	return r
+}
+
+// TerraformProviderRoutes provides endpoints for Terraform provider discovery and downloads.
+// Implements the Terraform provider registry protocol for listing versions and downloading providers.
+// These endpoints are mounted on a separate route group to handle provider-specific requests.
+func TerraformProviderRoutes() *web.Router {
+	r := web.NewRouter()
+
+	r.AfterRouting(context.PackageContexter())
+
+	verifyAuth(r, []auth.Method{
+		&auth.Basic{},
+		&auth.OAuth2{},
+	}, verifyAuthOptions{})
+
+	r.Group("/{username}", func() {
+		r.Group("/{packagename}", func() {
+			r.Get("/versions", terraform.GetProviderVersions)
+			r.Group("/{packageversion}", func() {
+				r.Get("/download/{os}/{architecture}", terraform.GetProviderDownload)
+			})
+		})
+	}, context.UserAssignmentWeb(), context.PackageAssignment(), reqPackageAccess(perm.AccessModeRead))
 
 	return r
 }
