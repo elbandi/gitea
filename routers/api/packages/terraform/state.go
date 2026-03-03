@@ -211,7 +211,7 @@ func DeleteStateFile(ctx *context.Context) {
 // LockState locks the specific terraform state.
 func LockState(ctx *context.Context) {
 	packageName := ctx.PathParam("packagename")
-	pv, err := packages_model.GetVersionByNameAndVersion(ctx, ctx.Package.Owner.ID, packages_model.TypeTfState, packageName, ctx.PathParam("filename"))
+	pv, err := packages_model.GetVersionByNameAndVersion(ctx, ctx.Package.Owner.ID, packages_model.TypeTerraformState, packageName, ctx.PathParam("filename"))
 	if err != nil {
 		if errors.Is(err, packages_model.ErrPackageNotExist) || errors.Is(err, packages_model.ErrPackageFileNotExist) {
 			apiError(ctx, http.StatusNotFound, err)
@@ -237,7 +237,7 @@ func LockState(ctx *context.Context) {
 // UnlockState unlock the specific terraform state.
 func UnlockState(ctx *context.Context) {
 	packageName := ctx.PathParam("packagename")
-	pv, err := packages_model.GetVersionByNameAndVersion(ctx, ctx.Package.Owner.ID, packages_model.TypeTfState, packageName, ctx.PathParam("filename"))
+	pv, err := packages_model.GetVersionByNameAndVersion(ctx, ctx.Package.Owner.ID, packages_model.TypeTerraformState, packageName, ctx.PathParam("filename"))
 	if err != nil {
 		if errors.Is(err, packages_model.ErrPackageNotExist) || errors.Is(err, packages_model.ErrPackageFileNotExist) {
 			apiError(ctx, http.StatusNotFound, err)

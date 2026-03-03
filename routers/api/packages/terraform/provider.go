@@ -21,7 +21,7 @@ import (
 )
 
 func GetProviderVersions(ctx *context.Context) {
-	p, err := packages_model.GetPackageByName(ctx, ctx.Package.Owner.ID, packages_model.TypeTfProv, ctx.PathParam("packagename"))
+	p, err := packages_model.GetPackageByName(ctx, ctx.Package.Owner.ID, packages_model.TypeTerraformProvider, ctx.PathParam("packagename"))
 	if err != nil {
 		if errors.Is(err, util.ErrNotExist) {
 			apiError(ctx, http.StatusNotFound, err)
@@ -47,7 +47,7 @@ func GetProviderDownload(ctx *context.Context) {
 	packageName := ctx.PathParam("packagename")
 	packageVersion := ctx.PathParam("packageversion")
 
-	pv, err := packages_model.GetVersionByNameAndVersion(ctx, ctx.Package.Owner.ID, packages_model.TypeTfProv, packageName, packageVersion)
+	pv, err := packages_model.GetVersionByNameAndVersion(ctx, ctx.Package.Owner.ID, packages_model.TypeTerraformProvider, packageName, packageVersion)
 	if err != nil {
 		if errors.Is(err, packages_model.ErrPackageNotExist) {
 			apiError(ctx, http.StatusNotFound, err)
@@ -100,7 +100,7 @@ func DownloadProviderFile(ctx *context.Context) {
 		ctx,
 		&packages_service.PackageInfo{
 			Owner:       ctx.Package.Owner,
-			PackageType: packages_model.TypeTfProv,
+			PackageType: packages_model.TypeTerraformProvider,
 			Name:        ctx.PathParam("packagename"),
 			Version:     ctx.PathParam("packageversion"),
 		},
@@ -220,7 +220,7 @@ func UploadProvider(ctx *context.Context) {
 		&packages_service.PackageCreationInfo{
 			PackageInfo: packages_service.PackageInfo{
 				Owner:       ctx.Package.Owner,
-				PackageType: packages_model.TypeTfProv,
+				PackageType: packages_model.TypeTerraformProvider,
 				Name:        packageName,
 				Version:     packageVersion,
 			},
@@ -284,7 +284,7 @@ func DeleteProvider(ctx *context.Context) {
 		ctx.Doer,
 		&packages_service.PackageInfo{
 			Owner:       ctx.Package.Owner,
-			PackageType: packages_model.TypeTfProv,
+			PackageType: packages_model.TypeTerraformProvider,
 			Name:        ctx.PathParam("packagename"),
 			Version:     ctx.PathParam("packageversion"),
 		},
