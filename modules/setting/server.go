@@ -53,6 +53,9 @@ var (
 	// PublicURLDetection controls how to use the HTTP request headers to detect public URL
 	PublicURLDetection string
 
+	// AppHost is the host (including optional port) parsed from AppURL
+	AppHost string
+
 	// AppSubURL represents the sub-url mounting point for gitea, parsed from "ROOT_URL"
 	// It is either "" or starts with '/' and ends without '/', such as '/{sub-path}'.
 	// This value is empty if site does not have sub-url.
@@ -238,6 +241,7 @@ func loadServerFrom(rootCfg ConfigProvider) {
 	// This should be TrimRight to ensure that there is only a single '/' at the end of AppURL.
 	AppURL = strings.TrimRight(appURL.String(), "/") + "/"
 
+	AppHost = appURL.Host
 	// AppSubURL should start with '/' and end without '/', such as '/{subpath}'.
 	// This value is empty if site does not have sub-url.
 	AppSubURL = strings.TrimSuffix(appURL.Path, "/")

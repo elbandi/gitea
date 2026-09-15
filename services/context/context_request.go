@@ -4,6 +4,7 @@
 package context
 
 import (
+	"errors"
 	"io"
 	"net/http"
 	"strings"
@@ -29,4 +30,21 @@ func (ctx *Context) UploadStream() (rd io.ReadCloser, needToClose bool, err erro
 		return nil, false, http.ErrMissingFile
 	}
 	return ctx.Req.Body, false, nil
+}
+
+// FormFileOptionalReadCloser returns (nil, nil) if the formKey is not present.
+func (ctx *Context) FormFileOptionalReadCloser(formKey string) (io.ReadCloser, error) {
+	multipartFile, _, err := ctx.Req.FormFile(formKey)
+	if err != nil && !errors.Is(err, http.ErrMissingFile) {
+		return nil, err
+	}
+	if multipartFile != nil {
+		return multipartFile, nil
+	}
+
+	content := ctx.Req.FormValue(formKey)
+	if content == "" {
+		return nil, nil //nolint:nilnil // return nil to indicate that the content does not exist
+	}
+	return io.NopCloser(strings.NewReader(content)), nil
 }

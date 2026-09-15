@@ -192,6 +192,7 @@ func NormalRoutes() *web.Router {
 		// This implements the OCI API, this container registry "/v2" endpoint must be in the root of the site.
 		// If site admin deploys Gitea in a sub-path, they must configure their reverse proxy to map the "https://host/v2" endpoint to Gitea.
 		r.Mount("/v2", packages_router.ContainerRoutes())
+		r.Mount("/terraform/provider/v1/providers", packages_router.TerraformProviderRoutes())
 	}
 
 	if setting.Actions.Enabled {

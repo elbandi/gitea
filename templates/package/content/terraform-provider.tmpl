@@ -1,0 +1,32 @@
+{{if eq .PackageDescriptor.Package.Type "tf-provider"}}
+	<h4 class="ui top attached header">{{ctx.Locale.Tr "packages.installation"}}</h4>
+	<div class="ui attached segment">
+		<div class="ui form">
+			<div class="field">
+				<label>{{svg "octicon-terminal"}} {{ctx.Locale.Tr "packages.tf-provider.registry"}}</label>
+				<p>{{ctx.Locale.Tr "packages.tf-provider.info"}}</p>
+				<div class="markup"><pre class="code-block"><code>terraform {
+  required_providers {
+    remote = {
+      source = "{{AppHost}}/{{$.PackageDescriptor.Owner.Name}}/{{$.PackageDescriptor.Package.Name}}"
+      version = "{{$.PackageDescriptor.Version.Version}}"
+    }
+  }
+}
+
+provider "remote" {
+  # Configuration options
+}</code></pre></div>
+			</div>
+			<div class="field">
+				<label>{{svg "octicon-terminal"}} {{ctx.Locale.Tr "packages.tf-provider.install"}}</label>
+				<div class="markup">
+					<pre class="code-block"><code>terraform init</code></pre>
+				</div>
+			</div>
+			<div class="field">
+				<label>{{ctx.Locale.Tr "packages.registry.documentation" "Terraform" "https://docs.gitea.com/usage/packages/terraform"}}</label>
+			</div>
+		</div>
+	</div>
+{{end}}

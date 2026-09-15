@@ -75,6 +75,9 @@ func newFuncMapWebPage() template.FuncMap {
 		"AppName": func() string {
 			return setting.AppName
 		},
+		"AppHost": func() string {
+			return setting.AppHost
+		},
 		"AppSubUrl": func() string {
 			return setting.AppSubURL
 		},
