@@ -1,0 +1,22 @@
+name: Package Cleanup
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *' # Run every day at 24:00
+
+permissions:
+  contents: read
+
+jobs:
+  delete-pkgs:
+    name: Artifacts
+    uses: Elbandi/github-workflows/.github/workflows/delete-packages.yml@v1
+    with:
+      package-name: gitea
+      min-versions-to-keep: 0
+      delete-only-untagged-versions: true
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
