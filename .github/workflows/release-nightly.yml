@@ -33,9 +33,10 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
       - run: make deps-frontend deps-backend
       # xgo build
-      - run: make release
+      - run: make frontend generate release-linux release-copy release-check
         env:
           TAGS: bindata
+          LINUX_ARCHS: linux/amd64
       # clean branch name to get the folder name in the object storage
       - name: Get cleaned branch name
         id: clean_name
